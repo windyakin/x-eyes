@@ -79,6 +79,7 @@ onUnmounted(() => {
       :key="index"
       type="button"
       class="media-item"
+      :style="photos.length === 1 ? { aspectRatio: `${photo.width} / ${photo.height}` } : undefined"
       @click="openLightbox(index)"
     >
       <div v-if="!loadedImages.has(index)" class="media-spinner">
@@ -184,7 +185,11 @@ onUnmounted(() => {
 }
 
 .media-grid.single .media-item {
-  aspect-ratio: 16 / 9;
+  aspect-ratio: auto;
+}
+
+.media-grid.single .media-item img {
+  object-fit: contain;
 }
 
 .media-item img {
