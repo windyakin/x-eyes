@@ -1,4 +1,4 @@
-# X Eyes — Firefox アドオン 新規プロジェクト作成
+# X Eyes — Firefox アドオン
 
 ## 概要
 
@@ -8,15 +8,16 @@ x.com の個別ツイートURL（`x.com/{user}/status/{id}` 形式）を開い�
 ## 動作フロー
 
 1. ユーザーが `x.com/{user}/status/{id}` にマッチする URL をブラウザで開く
-2. 拡張機能がナビゲーションをインターセプトし、同じタブで `moz-extension://{uuid}/x-eyes.html?url={元のURL}` にリダイレクトする
-3. ビューアページが URL のクエリパラメータを解析し、`api.fxtwitter.com` の API を使ってツイートデータを取得する
-4. 取得したデータをカード形式で画面中央に表示する
+2. Background Script が `webRequest.onBeforeRequest` でリクエストをインターセプト
+3. 元のリクエストをキャンセルし、`tabs.update` で同じタブを `moz-extension://{uuid}/x-eyes.html?url={元のURL}` にナビゲート
+4. ビューアページが URL のクエリパラメータを解析し、`api.fxtwitter.com` の API を使ってツイートデータを取得
+5. 取得したデータをカード形式で画面中央に表示
 
-### リダイレクトの実装方針
+### リダイレクト実装
 
-- Firefox の Multi-Account Containers アドオンが、コンテナタブ設定済み URL を開いたときに確認画面（拡張機能ページ）へリダイレクトするのと同様の手法を参考にすること
-- Manifest V3 の `declarativeNetRequest` や `webRequest` で `moz-extension://` ページへのリダイレクトが実現できるならば Manifest V3 を採用する
-- V3 で技術的に不可能な場合は Manifest V2（`webRequest.onBeforeRequest` + `redirectUrl`）で実装して構わない
+- **方式**: `webRequest.onBeforeRequest` + `tabs.update`（Manifest V3）
+- Manifest V3 の `declarativeNetRequest` では `moz-extension://` へのリダイレクトに制限があるため、webRequest API を使用
+- 無限ループ防止のため、リダイレクト中のタブIDを `Set` で追跡
 - 対象 URL パターン: `*://x.com/*/status/*` および `*://twitter.com/*/status/*`
 
 ## API
@@ -24,15 +25,14 @@ x.com の個別ツイートURL（`x.com/{user}/status/{id}` 形式）を開い�
 - エンドポイント: `https://api.fxtwitter.com/{user}/status/{id}`
 - 認証不要
 - レスポンスは JSON で、ツイート本文・メディア・ユーザー情報などを含む
-- 実装前に上記エンドポイントのレスポンス構造を実際にリクエストして確認し、それに基づいて型定義・表示ロジックを組むこと
 
-## 表示する情報（これだけ。他は一切不要）
+## 表示する情報
 
 - ユーザーアイコン（アバター画像）
 - ユーザー名 / スクリーンネーム（@handle）
 - ツイート本文
-- 添付画像（複数対応）
-- 添付動画
+- 添付画像（複数対応、グリッド表示）
+- 添付動画（インライン再生）
 - 引用ツイート（入れ子カードとして表示）
 
 ### 表示しないもの
@@ -48,61 +48,134 @@ x.com の個別ツイートURL（`x.com/{user}/status/{id}` 形式）を開い�
 |---|---|
 | ビューアページ UI | Vue.js 3 (Composition API, TypeScript) |
 | Background Script | TypeScript（Vite でビルド） |
-| ビルド | Vite（+ ブラウザ拡張向けプラグイン。例: `vite-plugin-web-extension` など適切なものを選定） |
-| パッケージング / 開発サーバー | `web-ext`（Mozilla 公式の拡張機能開発ツール） |
+| ビルド | Vite + @samrum/vite-plugin-web-extension |
+| パッケージング / 開発サーバー | web-ext（Mozilla 公式） |
 | CSS フレームワーク | Bootstrap 5 |
-| 拡張機能マニフェスト | Manifest V3 優先、不可なら V2 |
+| 拡張機能マニフェスト | Manifest V3 |
 
-### web-ext の利用
+### 依存関係
 
-- `web-ext run` で開発中の動作確認（Firefox の一時的な拡張機能読み込み）を行えるようにすること
-- `web-ext build` で配布用 `.zip` / `.xpi` を生成できるようにすること
-- `package.json` の scripts に以下のようなコマンドを用意すること:
-  - `dev` — Vite のビルド（watch モード）+ `web-ext run` を並行実行
-  - `build` — Vite の本番ビルド + `web-ext build`
-- `web-ext` の設定（`sourceDir` を Vite の出力ディレクトリに向けるなど）は `web-ext-config.mjs` またはそれに相当するファイルで管理する
+```json
+{
+  "dependencies": {
+    "bootstrap": "^5.3.8",
+    "vue": "^3.5.27"
+  },
+  "devDependencies": {
+    "@samrum/vite-plugin-web-extension": "^5.1.1",
+    "@vitejs/plugin-vue": "^6.0.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vue-tsc": "^3.2.4",
+    "web-ext": "^9.2.0",
+    "web-ext-types": "^3.2.1"
+  }
+}
+```
+
+## 開発コマンド
+
+```bash
+# 開発（Vite watch モード）
+npm run dev
+
+# Firefox で動作確認（Vite watch + web-ext run 並行実行）
+npm run dev:firefox
+
+# 本番ビルド
+npm run build
+
+# 拡張機能パッケージ作成（dist → web-ext-artifacts/*.zip）
+npm run build:firefox
+
+# TypeScript 型チェック
+npm run lint
+```
 
 ## UI 仕様
 
 - 画面中央にツイートカードを 1 枚表示するシンプルなレイアウト
 - カードの最大幅は 600px 程度
-- 配色は OS のカラースキーム設定（`prefers-color-scheme`）に追従する
+- 配色は OS のカラースキーム設定（`prefers-color-scheme`）に追従
   - ダークモード: 暗い背景 + 明るいテキスト
   - ライトモード: 明るい背景 + 暗いテキスト
-- 画像は複数枚ある場合グリッド表示
-- 動画はインラインで再生可能にする
-- 引用ツイートはカード内に入れ子のカードとして表示する
-- ローディング中はスピナーなどで待機状態を示す
-- API エラー時はエラーメッセージを表示し、元の x.com URL へのリンクを提示する
+- 画像は複数枚ある場合グリッド表示（1枚/2枚横並び/3-4枚2x2グリッド）
+- 動画はインラインで再生可能
+- 引用ツイートはカード内に入れ子のカードとして表示
+- ローディング中はスピナーで待機状態を示す
+- API エラー時はエラーメッセージを表示し、元の x.com URL へのリンクを提示
 
-## プロジェクト構成（参考）
+## プロジェクト構成
 
 ```
 x-eyes/
 ├── src/
-│   ├── background/          # Service Worker / Background Script (TypeScript)
-│   │   └── index.ts
-│   ├── viewer/              # ビューアページ (x-eyes.html)
-│   │   ├── App.vue
-│   │   ├── main.ts
+│   ├── background/
+│   │   └── index.ts           # webRequest によるリダイレクト処理
+│   ├── viewer/
+│   │   ├── App.vue            # メインコンポーネント
+│   │   ├── main.ts            # Vue アプリエントリポイント
 │   │   ├── components/
-│   │   │   ├── TweetCard.vue
-│   │   │   ├── QuotedTweet.vue
-│   │   │   ├── MediaGrid.vue
-│   │   │   └── VideoPlayer.vue
-│   │   └── api/
-│   │       └── fxtwitter.ts # API クライアント + 型定義
-│   └── assets/
+│   │   │   ├── TweetCard.vue      # ツイートカード
+│   │   │   ├── QuotedTweet.vue    # 引用ツイート
+│   │   │   ├── MediaGrid.vue      # 画像グリッド
+│   │   │   └── VideoPlayer.vue    # 動画プレイヤー
+│   │   ├── api/
+│   │   │   └── fxtwitter.ts   # API クライアント + 型定義
+│   │   └── styles/
+│   │       └── main.css       # ダーク/ライトモード対応スタイル
+│   ├── types/
+│   │   └── browser.d.ts       # browser API 型定義（webRequest等）
+│   └── vite-env.d.ts          # Vite 環境型定義
 ├── public/
 │   └── icons/
-├── manifest.json
-├── vite.config.ts
+│       ├── icon-48.png
+│       └── icon-96.png
+├── dist/                      # ビルド出力（.gitignore）
+├── web-ext-artifacts/         # パッケージ出力（.gitignore）
+├── x-eyes.html                # ビューアページ HTML
+├── vite.config.ts             # Vite + manifest 設定
 ├── tsconfig.json
-├── web-ext-config.mjs       # web-ext の設定
-└── package.json
+├── tsconfig.node.json
+├── web-ext-config.mjs         # web-ext 設定
+├── package.json
+└── .gitignore
+```
+
+## manifest 設定（vite.config.ts 内）
+
+```typescript
+{
+  manifest_version: 3,
+  name: 'X Eyes',
+  version: '1.0.0',
+  browser_specific_settings: {
+    gecko: {
+      id: 'x-eyes@example.com',
+      strict_min_version: '113.0'
+    }
+  },
+  permissions: ['webRequest', 'webRequestBlocking', 'webNavigation', 'tabs'],
+  host_permissions: [
+    '*://x.com/*',
+    '*://twitter.com/*',
+    'https://api.fxtwitter.com/*',
+    'https://pbs.twimg.com/*',
+    'https://video.twimg.com/*'
+  ],
+  background: {
+    scripts: ['src/background/index.ts'],
+    type: 'module'
+  },
+  web_accessible_resources: [{
+    resources: ['x-eyes.html'],
+    matches: ['*://x.com/*', '*://twitter.com/*']
+  }]
+}
 ```
 
 ## 補足事項
 
-- `api.fxtwitter.com` への fetch は拡張機能ページから行うため、manifest の `permissions` または `host_permissions` に適切なオリジンを追加すること
-- ビューアページの HTML ファイル（x-eyes.html）は `web_accessible_resources` に含める必要はない（拡張機能自身のページなので）。ただしリダイレクト先として使うために manifest で適切に登録すること
+- `api.fxtwitter.com` への fetch は拡張機能ページから行うため、`host_permissions` に適切なオリジンを追加済み
+- 画像・動画の直接読み込みのため `pbs.twimg.com` / `video.twimg.com` も `host_permissions` に追加
+- ビューアページ（x-eyes.html）は `web_accessible_resources` に含める必要がある（webRequest からのリダイレクト先として使用するため）
