@@ -8,13 +8,19 @@
     "dev:firefox": "npm run dev & web-ext run",
     "build": "vite build",
     "build:firefox": "npm run build && web-ext build",
-    "lint": "vue-tsc --noEmit"
+    "lint": "vue-tsc --noEmit && web-ext lint",
+    "setup:twemoji": "rm -rf public/twemoji && mkdir -p public/twemoji && curl -sL https://github.com/jdecked/twemoji/archive/refs/heads/main.tar.gz | tar -xz --strip-components=3 -C public/twemoji twemoji-main/assets/svg"
   },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/windyakin/x-eyes.git"
   },
-  "keywords": ["firefox", "extension", "twitter", "x"],
+  "keywords": [
+    "firefox",
+    "extension",
+    "twitter",
+    "x"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {
@@ -22,6 +28,7 @@
   },
   "homepage": "https://github.com/windyakin/x-eyes#readme",
   "dependencies": {
+    "@twemoji/api": "^17.0.2",
     "bootstrap": "^5.3.8",
     "vue": "^3.5.27"
   },

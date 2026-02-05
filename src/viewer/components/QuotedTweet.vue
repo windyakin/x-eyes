@@ -2,14 +2,19 @@
 import type { APITweet } from '../api/fxtwitter'
 import MediaGrid from './MediaGrid.vue'
 import VideoPlayer from './VideoPlayer.vue'
+import { escapeAndParseEmoji } from '../utils/twemoji'
 
 defineProps<{
   tweet: APITweet
 }>()
 
-function truncateText(text: string, maxLength: number = 280): string {
-  if (text.length <= maxLength) return text
-  return text.slice(0, maxLength) + '...'
+function formatDisplayName(name: string): string {
+  return escapeAndParseEmoji(name)
+}
+
+function formatQuotedText(text: string, maxLength: number = 280): string {
+  const truncated = text.length <= maxLength ? text : text.slice(0, maxLength) + '...'
+  return escapeAndParseEmoji(truncated)
 }
 </script>
 
@@ -26,11 +31,11 @@ function truncateText(text: string, maxLength: number = 280): string {
         :alt="tweet.author.name"
         class="quoted-avatar"
       >
-      <span class="quoted-name">{{ tweet.author.name }}</span>
+      <span class="quoted-name" v-html="formatDisplayName(tweet.author.name)"></span>
       <span class="quoted-screen-name">@{{ tweet.author.screen_name }}</span>
     </div>
 
-    <div class="quoted-text">{{ truncateText(tweet.text) }}</div>
+    <div class="quoted-text" v-html="formatQuotedText(tweet.text)"></div>
 
     <!-- Media in quoted tweet -->
     <div v-if="tweet.media" class="quoted-media">

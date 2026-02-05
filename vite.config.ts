@@ -39,7 +39,7 @@ export default defineConfig({
         },
         web_accessible_resources: [
           {
-            resources: ['x-eyes.html'],
+            resources: ['x-eyes.html', 'twemoji/*'],
             matches: ['*://x.com/*', '*://twitter.com/*']
           }
         ]

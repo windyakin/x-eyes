@@ -5,6 +5,9 @@ node_modules/
 dist/
 web-ext-artifacts/
 
+# Twemoji SVG assets (run: npm run setup:twemoji)
+public/twemoji/
+
 # IDE
 .vscode/
 .idea/

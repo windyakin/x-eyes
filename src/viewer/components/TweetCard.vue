@@ -3,6 +3,7 @@ import type { APITweet } from '../api/fxtwitter'
 import MediaGrid from './MediaGrid.vue'
 import VideoPlayer from './VideoPlayer.vue'
 import QuotedTweet from './QuotedTweet.vue'
+import { parseEmoji, escapeAndParseEmoji } from '../utils/twemoji'
 
 defineProps<{
   tweet: APITweet
@@ -36,7 +37,12 @@ function formatText(text: string): string {
   // Convert newlines to <br>
   formatted = formatted.replace(/\n/g, '<br>')
 
-  return formatted
+  // Convert emoji to twemoji
+  return parseEmoji(formatted)
+}
+
+function formatDisplayName(name: string): string {
+  return escapeAndParseEmoji(name)
 }
 </script>
 
@@ -51,7 +57,7 @@ function formatText(text: string): string {
           class="avatar"
         >
         <div class="author-names">
-          <span class="display-name">{{ tweet.author.name }}</span>
+          <span class="display-name" v-html="formatDisplayName(tweet.author.name)"></span>
           <span class="screen-name">@{{ tweet.author.screen_name }}</span>
         </div>
       </div>
