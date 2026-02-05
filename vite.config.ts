@@ -1,0 +1,61 @@
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import webExtension from '@samrum/vite-plugin-web-extension'
+import { resolve } from 'path'
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    webExtension({
+      manifest: {
+        manifest_version: 3,
+        name: 'X Eyes',
+        version: '1.0.0',
+        description: 'View tweets cleanly without X\'s interface',
+        browser_specific_settings: {
+          gecko: {
+            id: 'x-eyes@example.com',
+            strict_min_version: '113.0'
+          }
+        },
+        permissions: ['declarativeNetRequest', 'declarativeNetRequestWithHostAccess'],
+        host_permissions: [
+          '*://x.com/*',
+          '*://twitter.com/*',
+          'https://api.fxtwitter.com/*',
+          'https://pbs.twimg.com/*',
+          'https://video.twimg.com/*'
+        ],
+        background: {
+          scripts: ['src/background/index.ts'],
+          type: 'module' as const
+        },
+        icons: {
+          48: 'icons/icon-48.png',
+          96: 'icons/icon-96.png'
+        },
+        web_accessible_resources: [
+          {
+            resources: ['src/viewer/x-eyes.html'],
+            matches: ['*://x.com/*', '*://twitter.com/*']
+          }
+        ]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any
+    })
+  ],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src')
+    }
+  },
+  build: {
+    outDir: 'dist',
+    emptyDirFirst: true,
+    rollupOptions: {
+      input: {
+        'x-eyes': resolve(__dirname, 'src/viewer/x-eyes.html')
+      }
+    }
+  }
+})
