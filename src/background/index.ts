@@ -3,47 +3,55 @@
 
 const TWEET_URL_PATTERN = /^https?:\/\/(x|twitter)\.com\/([^/]+)\/status\/(\d+)/
 
-// Register dynamic rules for redirecting tweet URLs
-async function setupRedirectRules(): Promise<void> {
-  const extensionUrl = browser.runtime.getURL('src/viewer/x-eyes.html')
+// Track tabs that are being redirected to avoid infinite loops
+const redirectingTabs = new Set<number>()
 
-  // Remove existing rules first
-  const existingRules = await browser.declarativeNetRequest.getDynamicRules()
-  const existingRuleIds = existingRules.map(rule => rule.id)
+// Use webRequest to cancel the original request and tabs.update to navigate to viewer
+browser.webRequest.onBeforeRequest.addListener(
+  (details) => {
+    // Only handle main frame navigation
+    if (details.type !== 'main_frame') {
+      return {}
+    }
 
-  if (existingRuleIds.length > 0) {
-    await browser.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: existingRuleIds
-    })
-  }
+    // Check if URL matches tweet pattern
+    if (!TWEET_URL_PATTERN.test(details.url)) {
+      return {}
+    }
 
-  // Add redirect rules for x.com and twitter.com
-  await browser.declarativeNetRequest.updateDynamicRules({
-    addRules: [
-      {
-        id: 1,
-        priority: 1,
-        action: {
-          type: 'redirect',
-          redirect: {
-            regexSubstitution: `${extensionUrl}?url=\\0`
-          }
-        },
-        condition: {
-          regexFilter: '^https?://(x|twitter)\\.com/[^/]+/status/\\d+',
-          resourceTypes: ['main_frame']
-        }
-      }
-    ]
-  })
+    // Skip if this tab is already being redirected
+    if (details.tabId !== -1 && redirectingTabs.has(details.tabId)) {
+      return {}
+    }
 
-  console.log('[X Eyes] Redirect rules configured')
-}
+    // Build redirect URL to viewer page
+    const viewerUrl = browser.runtime.getURL('x-eyes.html')
+    const redirectUrl = `${viewerUrl}?url=${encodeURIComponent(details.url)}`
 
-// Initialize on extension load
-browser.runtime.onInstalled.addListener(() => {
-  setupRedirectRules()
-})
+    console.log('[X Eyes] Intercepting:', details.url)
 
-// Also setup on browser startup
-setupRedirectRules()
+    // Mark this tab as being redirected
+    if (details.tabId !== -1) {
+      redirectingTabs.add(details.tabId)
+
+      // Use tabs.update to navigate to the viewer page
+      browser.tabs.update(details.tabId, { url: redirectUrl }).then(() => {
+        console.log('[X Eyes] Redirected tab', details.tabId, 'to viewer')
+        // Remove from tracking after a short delay
+        setTimeout(() => redirectingTabs.delete(details.tabId), 1000)
+      }).catch((err) => {
+        console.error('[X Eyes] Failed to redirect:', err)
+        redirectingTabs.delete(details.tabId)
+      })
+    }
+
+    // Cancel the original request
+    return { cancel: true }
+  },
+  {
+    urls: ['*://x.com/*/status/*', '*://twitter.com/*/status/*']
+  },
+  ['blocking']
+)
+
+console.log('[X Eyes] Background script loaded')

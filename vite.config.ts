@@ -18,7 +18,7 @@ export default defineConfig({
             strict_min_version: '113.0'
           }
         },
-        permissions: ['declarativeNetRequest', 'declarativeNetRequestWithHostAccess'],
+        permissions: ['webRequest', 'webRequestBlocking', 'webNavigation', 'tabs'],
         host_permissions: [
           '*://x.com/*',
           '*://twitter.com/*',
@@ -36,7 +36,7 @@ export default defineConfig({
         },
         web_accessible_resources: [
           {
-            resources: ['src/viewer/x-eyes.html'],
+            resources: ['x-eyes.html'],
             matches: ['*://x.com/*', '*://twitter.com/*']
           }
         ]
@@ -54,7 +54,7 @@ export default defineConfig({
     emptyDirFirst: true,
     rollupOptions: {
       input: {
-        'x-eyes': resolve(__dirname, 'src/viewer/x-eyes.html')
+        'x-eyes': resolve(__dirname, 'x-eyes.html')
       }
     }
   }
