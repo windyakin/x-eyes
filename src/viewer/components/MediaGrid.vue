@@ -78,12 +78,14 @@ onUnmounted(() => {
       v-for="(photo, index) in photos.slice(0, 4)"
       :key="index"
       type="button"
-      class="media-item"
+      class="media-item position-relative d-block overflow-hidden p-0 border-0"
       :style="photos.length === 1 ? { aspectRatio: `${photo.width} / ${photo.height}` } : undefined"
       @click="openLightbox(index)"
     >
-      <div v-if="!loadedImages.has(index)" class="media-spinner">
-        <div class="spinner"></div>
+      <div v-if="!loadedImages.has(index)" class="position-absolute top-0 start-0 end-0 bottom-0 d-flex align-items-center justify-content-center">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
       </div>
       <img
         :src="photo.url"
@@ -174,12 +176,7 @@ onUnmounted(() => {
 }
 
 .media-item {
-  position: relative;
-  display: block;
-  overflow: hidden;
   aspect-ratio: 16 / 9;
-  padding: 0;
-  border: none;
   background: var(--bs-secondary-bg);
   cursor: pointer;
 }
@@ -206,29 +203,6 @@ onUnmounted(() => {
 
 .media-item:hover img.loaded {
   transform: scale(1.02);
-}
-
-.media-spinner {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--bs-border-color);
-  border-top-color: var(--bs-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* Lightbox styles */

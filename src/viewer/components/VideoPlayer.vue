@@ -7,8 +7,9 @@ defineProps<{
 </script>
 
 <template>
-  <div class="video-container" v-for="(video, index) in videos" :key="index">
+  <div class="rounded-3 overflow-hidden bg-black" v-for="(video, index) in videos" :key="index">
     <video
+      class="d-block w-100 video"
       :src="video.url"
       :poster="video.thumbnail_url"
       controls
@@ -21,15 +22,7 @@ defineProps<{
 </template>
 
 <style scoped>
-.video-container {
-  border-radius: 12px;
-  overflow: hidden;
-  background: #000;
-}
-
-.video-container video {
-  width: 100%;
+.video {
   max-height: 500px;
-  display: block;
 }
 </style>

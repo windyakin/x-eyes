@@ -1,13 +1,28 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import type { APITweet } from '../api/fxtwitter'
 import MediaGrid from './MediaGrid.vue'
 import VideoPlayer from './VideoPlayer.vue'
 import QuotedTweet from './QuotedTweet.vue'
 import { parseEmoji, escapeAndParseEmoji } from '../utils/twemoji'
 
-defineProps<{
+const props = defineProps<{
   tweet: APITweet
 }>()
+
+const copied = ref(false)
+
+async function copyLink() {
+  try {
+    await navigator.clipboard.writeText(props.tweet.url)
+    copied.value = true
+    setTimeout(() => {
+      copied.value = false
+    }, 2000)
+  } catch (e) {
+    console.error('Failed to copy:', e)
+  }
+}
 
 function formatDate(timestamp: number): string {
   const date = new Date(timestamp * 1000)
@@ -47,26 +62,26 @@ function formatDisplayName(name: string): string {
 </script>
 
 <template>
-  <div class="card tweet-card">
+  <div class="card rounded-4 shadow-sm">
     <div class="card-body">
       <!-- Author Info -->
-      <div class="author-info">
+      <div class="d-flex align-items-center gap-3 mb-3">
         <img
           :src="tweet.author.avatar_url"
           :alt="tweet.author.name"
-          class="avatar"
+          class="avatar rounded-circle"
         >
-        <div class="author-names">
-          <span class="display-name" v-html="formatDisplayName(tweet.author.name)"></span>
-          <span class="screen-name">@{{ tweet.author.screen_name }}</span>
+        <div class="d-flex flex-column">
+          <span class="display-name fw-bold lh-sm" v-html="formatDisplayName(tweet.author.name)"></span>
+          <small class="text-body-secondary">@{{ tweet.author.screen_name }}</small>
         </div>
       </div>
 
       <!-- Tweet Text -->
-      <div class="tweet-text" v-html="formatText(tweet.text)"></div>
+      <div class="tweet-text mb-3" v-html="formatText(tweet.text)"></div>
 
       <!-- Media -->
-      <div v-if="tweet.media" class="tweet-media">
+      <div v-if="tweet.media" class="mb-3">
         <!-- Photos -->
         <MediaGrid
           v-if="tweet.media.photos && tweet.media.photos.length > 0"
@@ -87,58 +102,34 @@ function formatDisplayName(name: string): string {
       />
 
       <!-- Footer with timestamp -->
-      <div class="tweet-footer">
-        <time :datetime="tweet.created_at">{{ formatDate(tweet.created_timestamp) }}</time>
+      <div class="d-flex justify-content-between align-items-center mt-2">
+        <small class="text-body-secondary">
+          <time :datetime="tweet.created_at">{{ formatDate(tweet.created_timestamp) }}</time>
+        </small>
+        <button
+          type="button"
+          class="btn btn-sm btn-link p-0 text-secondary text-decoration-none"
+          @click="copyLink"
+        >
+          {{ copied ? '✓ Copied!' : 'Copy Link' }}
+        </button>
       </div>
     </div>
-
   </div>
 </template>
 
 <style scoped>
-.tweet-card {
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.author-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
 .avatar {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
   object-fit: cover;
 }
 
-.author-names {
-  display: flex;
-  flex-direction: column;
-}
-
-.display-name {
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.screen-name {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
 .tweet-text {
-  font-size: 1rem;
-  line-height: 1.5;
   word-wrap: break-word;
-  margin-bottom: 0.75rem;
 }
 
 .tweet-text :deep(a) {
-  color: var(--link-color);
   text-decoration: none;
 }
 
@@ -146,16 +137,9 @@ function formatDisplayName(name: string): string {
   text-decoration: underline;
 }
 
-.tweet-media {
-  margin-bottom: 0.75rem;
-}
-
-.tweet-footer {
-  margin-top: 0.5rem;
-}
-
-.tweet-footer time {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+.copy-link-btn-copied {
+  background: rgba(29, 155, 240, 0.1) !important;
+  border-color: var(--link-color) !important;
+  color: var(--link-color) !important;
 }
 </style>
