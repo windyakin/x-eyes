@@ -8,6 +8,18 @@ defineProps<{
   tweet: APITweet
 }>()
 
+function formatDate(timestamp: number): string {
+  const date = new Date(timestamp * 1000)
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }
+  return date.toLocaleString(undefined, options)
+}
+
 function formatText(text: string): string {
   // Convert URLs to links
   const urlRegex = /(https?:\/\/[^\s]+)/g
@@ -67,7 +79,13 @@ function formatText(text: string): string {
         v-if="tweet.quote"
         :tweet="tweet.quote"
       />
+
+      <!-- Footer with timestamp -->
+      <div class="tweet-footer">
+        <time :datetime="tweet.created_at">{{ formatDate(tweet.created_timestamp) }}</time>
+      </div>
     </div>
+
   </div>
 </template>
 
@@ -124,5 +142,14 @@ function formatText(text: string): string {
 
 .tweet-media {
   margin-bottom: 0.75rem;
+}
+
+.tweet-footer {
+  margin-top: 0.5rem;
+}
+
+.tweet-footer time {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 </style>
