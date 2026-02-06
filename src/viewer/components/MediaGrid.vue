@@ -4,6 +4,7 @@ import type { APIPhoto } from '../api/fxtwitter'
 
 const props = defineProps<{
   photos: APIPhoto[]
+  disableHover?: boolean
 }>()
 
 const lightboxOpen = ref(false)
@@ -71,16 +72,18 @@ onUnmounted(() => {
       'single': photos.length === 1,
       'double': photos.length === 2,
       'triple': photos.length === 3,
-      'quad': photos.length >= 4
+      'quad': photos.length >= 4,
+      'no-hover': disableHover
     }"
   >
-    <button
+    <component
+      :is="disableHover ? 'div' : 'button'"
       v-for="(photo, index) in photos.slice(0, 4)"
       :key="index"
-      type="button"
+      :type="disableHover ? undefined : 'button'"
       class="media-item position-relative d-block overflow-hidden p-0 border-0"
       :style="photos.length === 1 ? { aspectRatio: `${photo.width} / ${photo.height}` } : undefined"
-      @click="openLightbox(index)"
+      @click="!disableHover && openLightbox(index)"
     >
       <div v-if="!loadedImages.has(index)" class="position-absolute top-0 start-0 end-0 bottom-0 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-primary" role="status">
@@ -93,7 +96,7 @@ onUnmounted(() => {
         :class="{ 'loaded': loadedImages.has(index) }"
         @load="onImageLoad(index)"
       >
-    </button>
+    </component>
   </div>
 
   <!-- Lightbox -->
@@ -203,6 +206,14 @@ onUnmounted(() => {
 
 .media-item:hover img.loaded {
   transform: scale(1.02);
+}
+
+.no-hover .media-item {
+  cursor: default;
+}
+
+.no-hover .media-item:hover img.loaded {
+  transform: none;
 }
 
 /* Lightbox styles */

@@ -42,6 +42,7 @@ function formatQuotedText(text: string, maxLength: number = 280): string {
       <MediaGrid
         v-if="tweet.media.photos && tweet.media.photos.length > 0"
         :photos="tweet.media.photos"
+        disable-hover
       />
       <VideoPlayer
         v-if="tweet.media.videos && tweet.media.videos.length > 0"
