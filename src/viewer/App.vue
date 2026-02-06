@@ -26,6 +26,10 @@ onMounted(async () => {
 
   if (result.success) {
     tweet.value = result.tweet
+    // Set page title based on tweet content
+    const author = result.tweet.author
+    const textPreview = result.tweet.text.slice(0, 50) + (result.tweet.text.length > 50 ? '...' : '')
+    document.title = `X Eyes - ${author.name} (@${author.screen_name}): "${textPreview}"`
   } else {
     error.value = result.error
   }
