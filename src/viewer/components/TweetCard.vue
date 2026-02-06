@@ -5,6 +5,7 @@ import MediaGrid from './MediaGrid.vue'
 import VideoPlayer from './VideoPlayer.vue'
 import QuotedTweet from './QuotedTweet.vue'
 import { parseEmoji, escapeAndParseEmoji } from '../utils/twemoji'
+import { formatHashtags } from '../utils/hashtag'
 
 const props = defineProps<{
   tweet: APITweet
@@ -45,9 +46,8 @@ function formatText(text: string): string {
   const mentionRegex = /@(\w+)/g
   formatted = formatted.replace(mentionRegex, '<a href="https://x.com/$1" target="_blank" rel="noopener">@$1</a>')
 
-  // Convert hashtags to links
-  const hashtagRegex = /#(\w+)/g
-  formatted = formatted.replace(hashtagRegex, '<a href="https://x.com/hashtag/$1" target="_blank" rel="noopener">#$1</a>')
+  // Convert hashtags to styled spans (not links)
+  formatted = formatHashtags(formatted)
 
   // Convert newlines to <br>
   formatted = formatted.replace(/\n/g, '<br>')
@@ -137,9 +137,12 @@ function formatDisplayName(name: string): string {
   text-decoration: underline;
 }
 
-.copy-link-btn-copied {
-  background: rgba(29, 155, 240, 0.1) !important;
-  border-color: var(--link-color) !important;
-  color: var(--link-color) !important;
+.tweet-text :deep(.hashtag) {
+  color: rgb(29, 155, 240);
+}
+
+.tweet-text :deep(.hashtag:hover) {
+  text-decoration: underline;
+  cursor: pointer;
 }
 </style>
