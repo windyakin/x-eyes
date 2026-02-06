@@ -86,7 +86,7 @@ function formatDisplayName(name: string): string {
 </script>
 
 <template>
-  <div class="card rounded-4 shadow-sm position-relative">
+  <div class="card rounded-4 shadow position-relative">
     <!-- Close Button -->
     <button
       type="button"
@@ -143,10 +143,6 @@ function formatDisplayName(name: string): string {
         >
           <time :datetime="tweet.created_at">{{ formatDate(tweet.created_timestamp) }}</time>
         </a>
-        <span>·</span>
-        <span class="text-body-secondary">
-          Made with ❤️ by X Eyes 👀
-        </span>
       </div>
     </div>
   </div>
