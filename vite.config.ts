@@ -10,7 +10,7 @@ export default defineConfig({
       manifest: {
         manifest_version: 3,
         name: 'X Eyes',
-        version: '1.0.1',
+        version: '1.0.2',
         description: 'View tweets cleanly without X\'s interface',
         browser_specific_settings: {
           gecko: {

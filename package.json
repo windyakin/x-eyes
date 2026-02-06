@@ -1,6 +1,6 @@
 {
   "name": "x-eyes",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "View tweets cleanly without X's interface",
   "type": "module",
   "scripts": {
