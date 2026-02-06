@@ -138,7 +138,7 @@ onMounted(async () => {
 }
 
 .praise-enter-active {
-  transition: opacity 0.15s ease-out;
+  transition: opacity 0.1s ease-out;
 }
 
 .praise-enter-from {
