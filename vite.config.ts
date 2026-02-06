@@ -2,6 +2,9 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import webExtension from '@samrum/vite-plugin-web-extension'
 import { resolve } from 'path'
+import { readFileSync } from 'fs'
+
+const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'))
 
 export default defineConfig({
   plugins: [
@@ -10,7 +13,7 @@ export default defineConfig({
       manifest: {
         manifest_version: 3,
         name: 'X Eyes',
-        version: '1.0.2',
+        version: pkg.version,
         description: 'View tweets cleanly without X\'s interface',
         browser_specific_settings: {
           gecko: {
