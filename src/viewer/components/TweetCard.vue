@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { Tooltip } from 'bootstrap'
 import type { APITweet } from '../api/fxtwitter'
 import MediaGrid from './MediaGrid.vue'
 import VideoPlayer from './VideoPlayer.vue'
@@ -11,15 +12,38 @@ const props = defineProps<{
   tweet: APITweet
 }>()
 
-const copied = ref(false)
+const timestampRef = ref<HTMLElement | null>(null)
+let tooltipInstance: Tooltip | null = null
+
+onMounted(() => {
+  if (timestampRef.value) {
+    tooltipInstance = new Tooltip(timestampRef.value, {
+      title: '✓ URL Copied!',
+      placement: 'top',
+      trigger: 'manual'
+    })
+  }
+})
+
+onBeforeUnmount(() => {
+  tooltipInstance?.dispose()
+})
+
+function closeWindow() {
+  if (history.length > 1) {
+    history.back()
+  } else {
+    window.close()
+  }
+}
 
 async function copyLink() {
   try {
     await navigator.clipboard.writeText(props.tweet.url)
-    copied.value = true
+    tooltipInstance?.show()
     setTimeout(() => {
-      copied.value = false
-    }, 2000)
+      tooltipInstance?.hide()
+    }, 1500)
   } catch (e) {
     console.error('Failed to copy:', e)
   }
@@ -62,10 +86,18 @@ function formatDisplayName(name: string): string {
 </script>
 
 <template>
-  <div class="card rounded-4 shadow-sm">
+  <div class="card rounded-4 shadow-sm position-relative">
+    <!-- Close Button -->
+    <button
+      type="button"
+      class="btn-close position-absolute top-0 end-0 m-3"
+      aria-label="Close"
+      @click="closeWindow"
+    ></button>
+
     <div class="card-body">
       <!-- Author Info -->
-      <div class="d-flex align-items-center gap-3 mb-3">
+      <div class="d-flex align-items-center gap-2 mb-3">
         <img
           :src="tweet.author.avatar_url"
           :alt="tweet.author.name"
@@ -102,17 +134,19 @@ function formatDisplayName(name: string): string {
       />
 
       <!-- Footer with timestamp -->
-      <div class="d-flex justify-content-between align-items-center mt-2">
-        <small class="text-body-secondary">
-          <time :datetime="tweet.created_at">{{ formatDate(tweet.created_timestamp) }}</time>
-        </small>
-        <button
-          type="button"
-          class="btn btn-sm btn-link p-0 text-secondary text-decoration-none"
-          @click="copyLink"
+      <div class="tweet-footer d-flex align-items-center gap-1 mt-2">
+        <a
+          ref="timestampRef"
+          :href="tweet.url"
+          class="text-body-secondary text-decoration-none"
+          @click.prevent="copyLink"
         >
-          {{ copied ? '✓ Copied!' : 'Copy Link' }}
-        </button>
+          <time :datetime="tweet.created_at">{{ formatDate(tweet.created_timestamp) }}</time>
+        </a>
+        <span>·</span>
+        <span class="text-body-secondary">
+          Made with ❤️ by X Eyes 👀
+        </span>
       </div>
     </div>
   </div>
@@ -144,5 +178,9 @@ function formatDisplayName(name: string): string {
 .tweet-text :deep(.hashtag:hover) {
   text-decoration: underline;
   cursor: pointer;
+}
+
+.tweet-footer {
+  font-size: 0.875rem;
 }
 </style>
