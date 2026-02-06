@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { fetchTweet, type APITweet, type FetchTweetError } from './api/fxtwitter'
 import TweetCard from './components/TweetCard.vue'
 
@@ -7,6 +8,25 @@ const tweet = ref<APITweet | null>(null)
 const error = ref<FetchTweetError | null>(null)
 const loading = ref(true)
 const originalUrl = ref<string | null>(null)
+
+const { tm, rt } = useI18n()
+
+const showPraise = ref(false)
+const praiseMessage = ref('')
+
+function handleClose() {
+  const messages = tm('praise.messages')
+  const picked = messages[Math.floor(Math.random() * messages.length)]
+  praiseMessage.value = typeof picked === 'string' ? picked : rt(picked)
+  showPraise.value = true
+  setTimeout(() => {
+    if (history.length > 1) {
+      history.back()
+    } else {
+      window.close()
+    }
+  }, 500)
+}
 
 onMounted(async () => {
   const params = new URLSearchParams(window.location.search)
@@ -64,8 +84,15 @@ onMounted(async () => {
       </div>
 
       <!-- Tweet Display -->
-      <TweetCard v-else-if="tweet" :tweet="tweet" />
+      <TweetCard v-else-if="tweet" :tweet="tweet" @close="handleClose" />
     </div>
+
+    <!-- Praise Overlay -->
+    <Transition name="praise">
+      <div v-if="showPraise" class="praise-overlay">
+        <span class="praise-text">{{ praiseMessage }}</span>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -90,5 +117,31 @@ onMounted(async () => {
 
 .error-container {
   padding: 1rem;
+}
+
+.praise-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.praise-text {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+  padding: 0.75rem 1.5rem;
+}
+
+.praise-enter-active {
+  transition: opacity 0.15s ease-out;
+}
+
+.praise-enter-from {
+  opacity: 0;
 }
 </style>

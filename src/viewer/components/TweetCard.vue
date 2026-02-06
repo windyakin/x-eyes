@@ -12,6 +12,10 @@ const props = defineProps<{
   tweet: APITweet
 }>()
 
+const emit = defineEmits<{
+  close: []
+}>()
+
 const timestampRef = ref<HTMLElement | null>(null)
 let tooltipInstance: Tooltip | null = null
 
@@ -30,11 +34,7 @@ onBeforeUnmount(() => {
 })
 
 function closeWindow() {
-  if (history.length > 1) {
-    history.back()
-  } else {
-    window.close()
-  }
+  emit('close')
 }
 
 async function copyLink() {
@@ -183,4 +183,5 @@ function formatDisplayName(name: string): string {
 .tweet-footer {
   font-size: 0.875rem;
 }
+
 </style>
