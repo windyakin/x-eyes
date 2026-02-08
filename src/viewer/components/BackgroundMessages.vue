@@ -4,18 +4,27 @@ import { useI18n } from 'vue-i18n'
 
 const { tm, rt } = useI18n()
 
+const MESSAGE_COUNT = 12
+
 const messages = computed(() => {
   const allMessages = tm('confirmation.messages') as string[]
   const shuffled = [...allMessages].sort(() => Math.random() - 0.5)
-  return shuffled.slice(0, 12).map((msg, index) => {
+  const slotWidth = 100 / MESSAGE_COUNT
+  const baseDuration = 20
+  const timeSlot = baseDuration / MESSAGE_COUNT
+  const timeSlots = [...Array(MESSAGE_COUNT).keys()].sort(() => Math.random() - 0.5)
+  return shuffled.slice(0, MESSAGE_COUNT).map((msg, index) => {
     const duration = 15 + (index % 3) * 5
-    const randomStart = Math.random() * duration
-    const fontSize = 0.6 + Math.random() * 2.4
+    const baseDelay = timeSlot * timeSlots[index]
+    const delayOffset = (Math.random() - 0.5) * timeSlot * 0.6
+    const fontSize = 0.8 + Math.random() * 1.8
+    const baseLeft = -15 + slotWidth * index
+    const leftOffset = (Math.random() - 0.5) * slotWidth * 0.6
     return {
       text: typeof msg === 'string' ? msg : rt(msg),
       style: {
-        left: `${-10 + Math.random() * 100}%`,
-        animationDelay: `-${randomStart}s`,
+        left: `${baseLeft + leftOffset}%`,
+        animationDelay: `-${baseDelay + delayOffset}s`,
         animationDuration: `${duration}s`,
         fontSize: `${fontSize}rem`
       }
