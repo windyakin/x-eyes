@@ -5,6 +5,7 @@ import { fetchTweet, type APITweet, type FetchTweetError } from './api/fxtwitter
 import TweetCard from './components/TweetCard.vue'
 import ConfirmationScreen from './components/ConfirmationScreen.vue'
 import BackgroundMessages from './components/BackgroundMessages.vue'
+import PraiseOverlay from './components/PraiseOverlay.vue'
 
 const tweet = ref<APITweet | null>(null)
 const error = ref<FetchTweetError | null>(null)
@@ -119,11 +120,7 @@ onMounted(async () => {
     </div>
 
     <!-- Praise Overlay -->
-    <Transition name="praise">
-      <div v-if="showPraise" class="praise-overlay">
-        <span class="praise-text">{{ praiseMessage }}</span>
-      </div>
-    </Transition>
+    <PraiseOverlay :show="showPraise" :message="praiseMessage" />
   </div>
 </template>
 
@@ -140,31 +137,5 @@ onMounted(async () => {
 
 .error-container {
   padding: 1rem;
-}
-
-.praise-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.75);
-}
-
-.praise-text {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #fff;
-  text-align: center;
-  padding: 0.75rem 1.5rem;
-}
-
-.praise-enter-active {
-  transition: opacity 0.1s ease-out;
-}
-
-.praise-enter-from {
-  opacity: 0;
 }
 </style>
