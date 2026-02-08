@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import ActionButtons from './ActionButtons.vue'
 
 const emit = defineEmits<{
   confirm: []
@@ -9,14 +10,47 @@ const emit = defineEmits<{
 
 const { t, tm, rt } = useI18n()
 
+const COUNTDOWN_SECONDS = 5
+const countdown = ref(COUNTDOWN_SECONDS)
+const isButtonEnabled = ref(false)
+let intervalId: number | null = null
+
 const randomMessage = computed(() => {
   const messages = tm('confirmation.messages')
   const picked = messages[Math.floor(Math.random() * messages.length)]
   return typeof picked === 'string' ? picked : rt(picked)
 })
 
+const buttonText = computed(() => {
+  if (isButtonEnabled.value) {
+    return t('confirmation.confirm')
+  }
+  return t('confirmation.confirmWait', { seconds: countdown.value })
+})
+
+onMounted(() => {
+  intervalId = window.setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) {
+      isButtonEnabled.value = true
+      if (intervalId !== null) {
+        clearInterval(intervalId)
+        intervalId = null
+      }
+    }
+  }, 1000)
+})
+
+onUnmounted(() => {
+  if (intervalId !== null) {
+    clearInterval(intervalId)
+  }
+})
+
 function handleConfirm() {
-  emit('confirm')
+  if (isButtonEnabled.value) {
+    emit('confirm')
+  }
 }
 
 function handleCancel() {
@@ -34,22 +68,14 @@ function handleCancel() {
       <h2 class="card-title h4 mb-3">{{ randomMessage }}</h2>
       <p class="card-text text-body-secondary mb-4">{{ t('confirmation.title') }}</p>
 
-      <div class="d-flex flex-column flex-sm-row gap-3 mt-5">
-        <button
-          type="button"
-          class="btn btn-outline-primary btn-lg w-50 flex-fill"
-          style="opacity: 0.5"
-          @click="handleConfirm"
-        >
-          {{ t('confirmation.confirm') }}
-        </button>
-        <button
-          type="button"
-          class="btn btn-secondary btn-lg w-50 flex-fill"
-          @click="handleCancel"
-        >
-          {{ t('confirmation.cancel') }}
-        </button>
+      <!-- Action Buttons (2x2 grid) -->
+      <div class="mt-5">
+        <ActionButtons
+          :is-confirm-enabled="isButtonEnabled"
+          :confirm-button-text="buttonText"
+          @confirm="handleConfirm"
+          @cancel="handleCancel"
+        />
       </div>
     </div>
   </div>

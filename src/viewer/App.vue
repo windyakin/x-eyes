@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchTweet, type APITweet, type FetchTweetError } from './api/fxtwitter'
+import { useStats } from './composables/useStats'
 import TweetCard from './components/TweetCard.vue'
 import ConfirmationScreen from './components/ConfirmationScreen.vue'
 import BackgroundMessages from './components/BackgroundMessages.vue'
@@ -14,11 +15,12 @@ const originalUrl = ref<string | null>(null)
 const confirmed = ref(false)
 
 const { tm, rt } = useI18n()
+const { stats, recordView, recordSkip } = useStats()
 
 const showPraise = ref(false)
 const praiseMessage = ref('')
 
-function handleClose() {
+function showPraiseAndClose() {
   const messages = tm('praise.messages')
   const picked = messages[Math.floor(Math.random() * messages.length)]
   praiseMessage.value = typeof picked === 'string' ? picked : rt(picked)
@@ -29,12 +31,16 @@ function handleClose() {
     } else {
       window.close()
     }
-  }, 500)
+  }, 700)
 }
 
-function handleConfirm() {
+function handleClose() {
+  showPraiseAndClose()
+}
+
+async function handleConfirm() {
   confirmed.value = true
-  // Set page title based on tweet content
+  await recordView()
   if (tweet.value) {
     const author = tweet.value.author
     const textPreview = tweet.value.text.slice(0, 50) + (tweet.value.text.length > 50 ? '...' : '')
@@ -42,8 +48,9 @@ function handleConfirm() {
   }
 }
 
-function handleCancel() {
-  handleClose()
+async function handleCancel() {
+  await recordSkip()
+  showPraiseAndClose()
 }
 
 onMounted(async () => {
@@ -120,7 +127,7 @@ onMounted(async () => {
     </div>
 
     <!-- Praise Overlay -->
-    <PraiseOverlay :show="showPraise" :message="praiseMessage" />
+    <PraiseOverlay :show="showPraise" :message="praiseMessage" :stats="stats" />
   </div>
 </template>
 

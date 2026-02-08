@@ -24,7 +24,7 @@ export default defineConfig({
             }
           }
         },
-        permissions: ['webRequest', 'webRequestBlocking', 'webNavigation', 'tabs'],
+        permissions: ['webRequest', 'webRequestBlocking', 'webNavigation', 'tabs', 'storage'],
         host_permissions: [
           '*://x.com/*',
           '*://twitter.com/*',
