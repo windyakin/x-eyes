@@ -3,7 +3,6 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { Tooltip } from 'bootstrap'
 import type { APITweet } from '../api/fxtwitter'
 import MediaGrid from './MediaGrid.vue'
-import VideoPlayer from './VideoPlayer.vue'
 import QuotedTweet from './QuotedTweet.vue'
 import { parseEmoji, escapeAndParseEmoji } from '../utils/twemoji'
 import { formatHashtags } from '../utils/hashtag'
@@ -113,16 +112,9 @@ function formatDisplayName(name: string): string {
       <div class="tweet-text mb-3" v-html="formatText(tweet.text)"></div>
 
       <!-- Media -->
-      <div v-if="tweet.media" class="mb-3">
-        <!-- Photos -->
+      <div v-if="tweet.media && (tweet.media.photos?.length || tweet.media.videos?.length)" class="mb-3">
         <MediaGrid
-          v-if="tweet.media.photos && tweet.media.photos.length > 0"
           :photos="tweet.media.photos"
-        />
-
-        <!-- Videos -->
-        <VideoPlayer
-          v-if="tweet.media.videos && tweet.media.videos.length > 0"
           :videos="tweet.media.videos"
         />
       </div>

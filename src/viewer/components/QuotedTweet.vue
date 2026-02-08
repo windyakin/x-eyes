@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { APITweet } from '../api/fxtwitter'
 import MediaGrid from './MediaGrid.vue'
-import VideoPlayer from './VideoPlayer.vue'
 import { escapeAndParseEmoji } from '../utils/twemoji'
 
 defineProps<{
@@ -38,15 +37,11 @@ function formatQuotedText(text: string, maxLength: number = 280): string {
     <small class="d-block quoted-text" v-html="formatQuotedText(tweet.text)"></small>
 
     <!-- Media in quoted tweet -->
-    <div v-if="tweet.media" class="mt-2">
+    <div v-if="tweet.media && (tweet.media.photos?.length || tweet.media.videos?.length)" class="mt-2">
       <MediaGrid
-        v-if="tweet.media.photos && tweet.media.photos.length > 0"
         :photos="tweet.media.photos"
-        disable-hover
-      />
-      <VideoPlayer
-        v-if="tweet.media.videos && tweet.media.videos.length > 0"
         :videos="tweet.media.videos"
+        disable-hover
       />
     </div>
   </a>
