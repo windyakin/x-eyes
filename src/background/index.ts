@@ -54,4 +54,37 @@ browser.webRequest.onBeforeRequest.addListener(
   ['blocking']
 )
 
+// Stats storage handling
+const STORAGE_KEY = 'x-eyes-stats'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+browser.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) => {
+  console.log('[X Eyes] Received message:', message.type, message)
+
+  if (message.type === 'getStats') {
+    browser.storage.local.get(STORAGE_KEY).then((result) => {
+      console.log('[X Eyes] getStats result:', result)
+      sendResponse({ stats: result[STORAGE_KEY] || null })
+    }).catch((e) => {
+      console.error('[X Eyes] getStats error:', e)
+      sendResponse({ stats: null })
+    })
+    return true // Keep channel open for async response
+  }
+
+  if (message.type === 'setStats') {
+    console.log('[X Eyes] setStats data:', message.stats)
+    browser.storage.local.set({ [STORAGE_KEY]: message.stats }).then(() => {
+      console.log('[X Eyes] setStats success')
+      sendResponse({ success: true })
+    }).catch((e) => {
+      console.error('[X Eyes] setStats error:', e)
+      sendResponse({ success: false })
+    })
+    return true
+  }
+
+  return false
+})
+
 console.log('[X Eyes] Background script loaded')
