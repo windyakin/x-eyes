@@ -58,26 +58,29 @@ jobs:
             const result = JSON.parse(fs.readFileSync('lint-result.json', 'utf8'));
             const { summary, errors, warnings, notices } = result;
 
-            let body = `### web-ext lint result\n\n`;
-            body += `| Type | Count |\n|---|---|\n`;
-            body += `| Errors | ${summary.errors} |\n`;
-            body += `| Warnings | ${summary.warnings} |\n`;
-            body += `| Notices | ${summary.notices} |\n\n`;
+            const hasIssues = summary.errors > 0 || summary.warnings > 0;
+            const statusEmoji = hasIssues ? '⚠️' : '✅';
 
-            const formatIssues = (issues, type) => {
+            let body = `### ${statusEmoji} web-ext lint result\n\n`;
+            body += `| Type | Count |\n|---|---|\n`;
+            body += `| ❌ Errors | ${summary.errors} |\n`;
+            body += `| ⚠️ Warnings | ${summary.warnings} |\n`;
+            body += `| ℹ️ Notices | ${summary.notices} |\n\n`;
+
+            const formatIssues = (issues, type, emoji) => {
               if (issues.length === 0) return '';
-              let md = `#### ${type}\n\n`;
+              let md = `#### ${emoji} ${type}\n\n`;
               for (const issue of issues) {
                 md += `- **${issue.code}**: ${issue.message}\n`;
-                md += `  - File: \`${issue.file}\` (line ${issue.line})\n`;
+                md += `  - 📄 \`${issue.file}\` (line ${issue.line})\n`;
                 md += `  - ${issue.description}\n`;
               }
               return md + '\n';
             };
 
-            body += formatIssues(errors, 'Errors');
-            body += formatIssues(warnings, 'Warnings');
-            body += formatIssues(notices, 'Notices');
+            body += formatIssues(errors, 'Errors', '❌');
+            body += formatIssues(warnings, 'Warnings', '⚠️');
+            body += formatIssues(notices, 'Notices', 'ℹ️');
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -85,26 +88,29 @@ jobs:
               issue_number: context.issue.number,
             });
 
-            const botComment = comments.find(comment =>
+            const botComments = comments.filter(comment =>
               comment.user.type === 'Bot' &&
-              comment.body.includes('### web-ext lint result')
+              comment.body.includes('web-ext lint result')
             );
 
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body
-              });
+            // Minimize old comments as outdated
+            for (const comment of botComments) {
+              await github.graphql(`
+                mutation($id: ID!) {
+                  minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) {
+                    clientMutationId
+                  }
+                }
+              `, { id: comment.node_id });
             }
+
+            // Create new comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
 
       - name: Check lint result
         run: npx web-ext lint --source-dir=dist
