@@ -3,11 +3,15 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchTweet, type APITweet, type FetchTweetError } from './api/fxtwitter'
 import TweetCard from './components/TweetCard.vue'
+import ConfirmationScreen from './components/ConfirmationScreen.vue'
+import BackgroundMessages from './components/BackgroundMessages.vue'
+import PraiseOverlay from './components/PraiseOverlay.vue'
 
 const tweet = ref<APITweet | null>(null)
 const error = ref<FetchTweetError | null>(null)
 const loading = ref(true)
 const originalUrl = ref<string | null>(null)
+const confirmed = ref(false)
 
 const { tm, rt } = useI18n()
 
@@ -28,6 +32,20 @@ function handleClose() {
   }, 500)
 }
 
+function handleConfirm() {
+  confirmed.value = true
+  // Set page title based on tweet content
+  if (tweet.value) {
+    const author = tweet.value.author
+    const textPreview = tweet.value.text.slice(0, 50) + (tweet.value.text.length > 50 ? '...' : '')
+    document.title = `X Eyes - ${author.name} (@${author.screen_name}): "${textPreview}"`
+  }
+}
+
+function handleCancel() {
+  handleClose()
+}
+
 onMounted(async () => {
   const params = new URLSearchParams(window.location.search)
   const url = params.get('url')
@@ -46,10 +64,6 @@ onMounted(async () => {
 
   if (result.success) {
     tweet.value = result.tweet
-    // Set page title based on tweet content
-    const author = result.tweet.author
-    const textPreview = result.tweet.text.slice(0, 50) + (result.tweet.text.length > 50 ? '...' : '')
-    document.title = `X Eyes - ${author.name} (@${author.screen_name}): "${textPreview}"`
   } else {
     error.value = result.error
   }
@@ -60,6 +74,9 @@ onMounted(async () => {
 
 <template>
   <div class="container-fluid d-flex flex-column min-vh-100 pt-5 px-3">
+    <!-- Background Messages (shown during confirmation) -->
+    <BackgroundMessages v-if="tweet && !confirmed" />
+
     <div class="flex-grow-1 d-flex justify-content-center align-items-center">
       <div class="tweet-wrapper">
         <!-- Loading State -->
@@ -84,8 +101,15 @@ onMounted(async () => {
           </div>
         </div>
 
+        <!-- Confirmation Screen -->
+        <ConfirmationScreen
+          v-else-if="tweet && !confirmed"
+          @confirm="handleConfirm"
+          @cancel="handleCancel"
+        />
+
         <!-- Tweet Display -->
-        <TweetCard v-else-if="tweet" :tweet="tweet" @close="handleClose" />
+        <TweetCard v-else-if="tweet && confirmed" :tweet="tweet" @close="handleClose" />
       </div>
     </div>
 
@@ -96,11 +120,7 @@ onMounted(async () => {
     </div>
 
     <!-- Praise Overlay -->
-    <Transition name="praise">
-      <div v-if="showPraise" class="praise-overlay">
-        <span class="praise-text">{{ praiseMessage }}</span>
-      </div>
-    </Transition>
+    <PraiseOverlay :show="showPraise" :message="praiseMessage" />
   </div>
 </template>
 
@@ -117,31 +137,5 @@ onMounted(async () => {
 
 .error-container {
   padding: 1rem;
-}
-
-.praise-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.75);
-}
-
-.praise-text {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #fff;
-  text-align: center;
-  padding: 0.75rem 1.5rem;
-}
-
-.praise-enter-active {
-  transition: opacity 0.1s ease-out;
-}
-
-.praise-enter-from {
-  opacity: 0;
 }
 </style>
