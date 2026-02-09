@@ -62,10 +62,8 @@ jobs:
             const statusEmoji = hasIssues ? '⚠️' : '✅';
 
             let body = `### ${statusEmoji} web-ext lint result\n\n`;
-            body += `| Type | Count |\n|---|---|\n`;
-            body += `| ❌ Errors | ${summary.errors} |\n`;
-            body += `| ⚠️ Warnings | ${summary.warnings} |\n`;
-            body += `| ℹ️ Notices | ${summary.notices} |\n\n`;
+            body += `| ❌ Errors | ⚠️ Warnings | ℹ️ Notices |\n|:---:|:---:|:---:|\n`;
+            body += `| ${summary.errors} | ${summary.warnings} | ${summary.notices} |\n\n`;
 
             const formatIssues = (issues, type, emoji) => {
               if (issues.length === 0) return '';
