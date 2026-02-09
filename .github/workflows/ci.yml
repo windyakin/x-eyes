@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  lint:
+  ts-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,9 +21,9 @@ jobs:
 
       - run: npm run setup:twemoji
 
-      - run: npm run lint
+      - run: npm run lint:ts
 
-  build:
+  web-ext:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,3 +38,5 @@ jobs:
       - run: npm run setup:twemoji
 
       - run: npm run build
+
+      - run: npm run lint:web-ext

@@ -8,7 +8,9 @@
     "dev:firefox": "npm run dev & web-ext run",
     "build": "vite build",
     "build:firefox": "npm run build && web-ext build",
-    "lint": "vue-tsc --noEmit && web-ext lint",
+    "lint:ts": "vue-tsc --noEmit",
+    "lint:web-ext": "web-ext lint",
+    "lint": "npm run lint:ts && npm run lint:web-ext",
     "setup:twemoji": "rm -rf public/twemoji && mkdir -p public/twemoji && curl -sL https://github.com/jdecked/twemoji/archive/refs/heads/main.tar.gz | tar -xz --strip-components=3 -C public/twemoji twemoji-main/assets/svg"
   },
   "repository": {
