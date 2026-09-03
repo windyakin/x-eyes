@@ -39,7 +39,7 @@
     "@samrum/vite-plugin-web-extension": "^5.1.1",
     "@vitejs/plugin-vue": "^6.0.4",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1",
+    "vite": "^8.0.0",
     "vue-tsc": "^3.2.4",
     "web-ext": "^9.2.0",
     "web-ext-types": "^3.2.1"
