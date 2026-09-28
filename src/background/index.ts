@@ -72,6 +72,21 @@ browser.runtime.onMessage.addListener((message: any, _sender: any, sendResponse:
     return true // Keep channel open for async response
   }
 
+  if (message.type === 'closeTab') {
+    const tabId = _sender.tab?.id
+    if (tabId != null) {
+      browser.tabs.remove(tabId).then(() => {
+        sendResponse({ success: true })
+      }).catch((e) => {
+        console.error('[X Eyes] closeTab error:', e)
+        sendResponse({ success: false })
+      })
+    } else {
+      sendResponse({ success: false })
+    }
+    return true
+  }
+
   if (message.type === 'setStats') {
     console.log('[X Eyes] setStats data:', message.stats)
     browser.storage.local.set({ [STORAGE_KEY]: message.stats }).then(() => {
