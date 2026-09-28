@@ -4,7 +4,7 @@ import webExtension from '@samrum/vite-plugin-web-extension'
 import { resolve } from 'path'
 import { readFileSync } from 'fs'
 
-const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'))
+const pkg = JSON.parse(readFileSync(resolve(import.meta.dirname, 'package.json'), 'utf-8'))
 
 export default defineConfig({
   plugins: [
@@ -52,7 +52,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
+      '@': resolve(import.meta.dirname, 'src')
     }
   },
   build: {
@@ -60,7 +60,7 @@ export default defineConfig({
     emptyDirFirst: true,
     rollupOptions: {
       input: {
-        'x-eyes': resolve(__dirname, 'x-eyes.html')
+        'x-eyes': resolve(import.meta.dirname, 'x-eyes.html')
       }
     }
   }
