@@ -26,11 +26,9 @@ function showPraiseAndClose() {
   praiseMessage.value = typeof picked === 'string' ? picked : rt(picked)
   showPraise.value = true
   setTimeout(() => {
-    if (history.length > 1) {
-      history.back()
-    } else {
+    browser.runtime.sendMessage({ type: 'closeTab' }).catch(() => {
       window.close()
-    }
+    })
   }, 700)
 }
 
